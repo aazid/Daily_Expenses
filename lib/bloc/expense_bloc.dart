@@ -7,14 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
   final ExpenseRepository repository;
   ExpenseBloc(this.repository)
-    : super(
-        ExpenseState(
-          expenses: [],
-          monthlyLimit: 0,
-          monthlyTotal: 0,
-          overLimit: false,
-        ),
-      ) {
+    : super(ExpenseState(expenses: [], monthlyLimit: 0, overLimit: false)) {
     on<LoadExpenses>(_onLoadExpenses);
     on<AddExpenses>(_onAddExpenses);
     on<DeleteExpenses>(_onDeleteExpenses);
@@ -22,17 +15,29 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
     on<SetBudgetLimit>(_onSetBudgetLimit);
     on<ClearAllExpenses>(_onClearAllExpenses);
     on<SetMonthlyBudget>(_onSetMonthlyBudget);
+    on<ChangeLimitType>(_onChangeLimitType);
+    on<SetDailyLimit>(_onSetDailyLimit);
+    on<SetWeeklyLimit>(_onSetWeeklyLimit);
+    on<RemainingBudget>(_onRemainingBudget);
   }
 
   void _onLoadExpenses(LoadExpenses event, Emitter<ExpenseState> emit) async {
     final expenses = await repository.getExpenses();
     final limit = await repository.getBudgetLimit();
+    final dailyLimit = await repository.getDailyLimit();
+    final weeklyLimit = await repository.getWeeklyLimit();
+    final limitType = await repository.getLimitType();
+    final savings = await repository.getSavings();
     final total = _calculateMonthlyTotal(expenses);
 
     emit(
       state.copyWith(
         expenses: expenses,
         monthlyLimit: limit,
+        dailyLimit: dailyLimit,
+        weeklyLimit: weeklyLimit,
+        activeLimitType: limitType,
+        saving: savings,
         monthlyTotal: total,
         overLimit: limit > 0 && total > limit,
       ),
@@ -125,6 +130,40 @@ class ExpenseBloc extends Bloc<ExpenseEvent, ExpenseState> {
         overLimit: event.budget > 0 && state.monthlyTotal > event.budget,
       ),
     );
+  }
+
+  void _onChangeLimitType(
+    ChangeLimitType event,
+    Emitter<ExpenseState> emit,
+  ) async {
+    emit(state.copyWith(activeLimitType: event.limitType));
+    await repository.saveLimitType(event.limitType);
+  }
+
+  void _onSetDailyLimit(SetDailyLimit event, Emitter<ExpenseState> emit) async {
+    emit(state.copyWith(dailyLimit: event.limit));
+    await repository.saveDailyLimit(event.limit);
+  }
+
+  void _onSetWeeklyLimit(
+    SetWeeklyLimit event,
+    Emitter<ExpenseState> emit,
+  ) async {
+    emit(state.copyWith(weeklyLimit: event.limit));
+    await repository.saveWeeklyLimit(event.limit);
+  }
+
+  void _onRemainingBudget(
+    RemainingBudget event,
+    Emitter<ExpenseState> emit,
+  ) async {
+    final remaining = state.remainingBudget;
+    if (remaining > 0) {
+      final newSaving = state.saving + remaining;
+      emit(state.copyWith(saving: newSaving));
+      await repository.saveSavings(newSaving);
+      print('Saved $remaining to savings! Total savings: $newSaving');
+    }
   }
 
   double _calculateMonthlyTotal(List<ExpenseModel> expenses) {

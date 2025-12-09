@@ -46,7 +46,10 @@ class _SplashScreenState extends State<SplashScreen>
         .animate(
           CurvedAnimation(parent: _slideController, curve: Curves.easeOutBack),
         );
-    _startAnimation();
+    // Delay to ensure ScreenUtil is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startAnimation();
+    });
   }
 
   void _startAnimation() async {
@@ -58,11 +61,13 @@ class _SplashScreenState extends State<SplashScreen>
     await Future.delayed(Duration(milliseconds: 300));
     _slideController.forward();
 
-    await Future.delayed(Duration(milliseconds: 300));
-    _navigateToHome();
+    await Future.delayed(Duration(milliseconds: 2000));
+    if (mounted) {
+      _navigateToHome();
+    }
   }
 
-  void _navigateToHome() async {
+  void _navigateToHome() {
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => HomeScreen(),
@@ -137,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen>
                                     child: Icon(
                                       Icons.account_balance_wallet,
                                       size: 60.sp,
-                                      color: Colors.white,
+                                      color: Colors.black,
                                     ),
                                   ),
                                 );

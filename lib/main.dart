@@ -1,7 +1,6 @@
 import 'package:expense_tracker/bloc/exense_event.dart';
 import 'package:expense_tracker/bloc/expense_bloc.dart';
 import 'package:expense_tracker/repo/expense_repository.dart';
-import 'package:expense_tracker/screen/home_screen.dart';
 import 'package:expense_tracker/screen/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -31,10 +30,11 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             title: 'Expense Tracker',
             theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
-            home: SplashScreen(),
+            home: child,
           ),
         );
       },
+      child: SplashScreen(),
     );
   }
 }

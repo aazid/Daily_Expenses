@@ -1,3 +1,4 @@
+import 'package:expense_tracker/bloc/expense_state.dart';
 import 'package:expense_tracker/model/expense_model.dart';
 
 abstract class ExpenseEvent {}
@@ -30,3 +31,20 @@ class SetMonthlyBudget extends ExpenseEvent {
   final double budget;
   SetMonthlyBudget(this.budget);
 }
+
+class ChangeLimitType extends ExpenseEvent {
+  final LimitType limitType;
+  ChangeLimitType(this.limitType);
+}
+
+class SetDailyLimit extends ExpenseEvent {
+  final double limit;
+  SetDailyLimit(this.limit);
+}
+
+class SetWeeklyLimit extends ExpenseEvent {
+  final double limit;
+  SetWeeklyLimit(this.limit);
+}
+
+class RemainingBudget extends ExpenseEvent {}

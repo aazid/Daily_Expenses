@@ -16,6 +16,8 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final _budgetController = TextEditingController();
+  final _dailyLimitController = TextEditingController();
+  final _weeklyLimitController = TextEditingController();
   bool _isDarkMode = false;
   bool _notificationsEnabled = true;
   String _currency = 'NPR';
@@ -30,6 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void dispose() {
     _budgetController.dispose();
+    _dailyLimitController.dispose();
+    _weeklyLimitController.dispose();
     super.dispose();
   }
 
@@ -43,6 +47,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _currency = prefs.getString('currency') ?? 'NPR';
       _budgetController.text = state.monthlyLimit > 0
           ? state.monthlyLimit.toString()
+          : '';
+      _dailyLimitController.text = state.dailyLimit > 0
+          ? state.dailyLimit.toString()
+          : '';
+      _weeklyLimitController.text = state.weeklyLimit > 0
+          ? state.weeklyLimit.toString()
           : '';
     });
   }
@@ -94,7 +104,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Budget Amount',
-                prefixText: 'Npr ',
+                prefixText: _currency,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.r),
                 ),
@@ -144,7 +154,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () {
                 context.read<ExpenseBloc>().add(SetBudgetLimit(0));
                 Navigator.pop(context);
-                _showSnackBar('Budget removed successfully');
+                _showSnackBar('Monthly budget removed successfully');
               },
               child: Text('Remove', style: TextStyle(color: Colors.red[600])),
             ),
@@ -154,13 +164,233 @@ class _SettingsScreenState extends State<SettingsScreen> {
               if (budget != null && budget > 0) {
                 context.read<ExpenseBloc>().add(SetBudgetLimit(budget));
                 Navigator.pop(context);
-                _showSnackBar('Budget updated successfully');
+                _showSnackBar('Monthly budget updated successfully');
               } else {
                 _showSnackBar('Please enter a valid amount', isError: true);
               }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            child: Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDailyLimitDialog() {
+    final state = context.read<ExpenseBloc>().state;
+    _dailyLimitController.text = state.dailyLimit > 0
+        ? state.dailyLimit.toString()
+        : '';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.today, color: Colors.orange[600], size: 24.sp),
+            SizedBox(width: 12.w),
+            Text(
+              'Set Daily Limit',
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _dailyLimitController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Daily Limit Amount',
+                prefixText: 'Npr ',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 12.h,
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            if (state.dailyLimit > 0)
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.orange[50],
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.orange[600],
+                      size: 16.sp,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        'Current: ${formatter.format(state.dailyLimit)}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.orange[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+          ),
+          if (state.dailyLimit > 0)
+            TextButton(
+              onPressed: () {
+                context.read<ExpenseBloc>().add(SetDailyLimit(0));
+                Navigator.pop(context);
+                _showSnackBar('Daily limit removed successfully');
+              },
+              child: Text('Remove', style: TextStyle(color: Colors.red[600])),
+            ),
+          ElevatedButton(
+            onPressed: () {
+              final limit = double.tryParse(_dailyLimitController.text);
+              if (limit != null && limit > 0) {
+                context.read<ExpenseBloc>().add(SetDailyLimit(limit));
+                Navigator.pop(context);
+                _showSnackBar('Daily limit updated successfully');
+              } else {
+                _showSnackBar('Please enter a valid amount', isError: true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
+            ),
+            child: Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showWeeklyLimitDialog() {
+    final state = context.read<ExpenseBloc>().state;
+    _weeklyLimitController.text = state.weeklyLimit > 0
+        ? state.weeklyLimit.toString()
+        : '';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.date_range, color: Colors.purple[600], size: 24.sp),
+            SizedBox(width: 12.w),
+            Text(
+              'Set Weekly Limit',
+              style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _weeklyLimitController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Weekly Limit Amount',
+                prefixText: 'Npr ',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 12.h,
+                ),
+              ),
+            ),
+            SizedBox(height: 16.h),
+            if (state.weeklyLimit > 0)
+              Container(
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: Colors.purple[50],
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: Colors.purple[600],
+                      size: 16.sp,
+                    ),
+                    SizedBox(width: 8.w),
+                    Expanded(
+                      child: Text(
+                        'Current: ${formatter.format(state.weeklyLimit)}',
+                        style: TextStyle(
+                          fontSize: 12.sp,
+                          color: Colors.purple[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+          ),
+          if (state.weeklyLimit > 0)
+            TextButton(
+              onPressed: () {
+                context.read<ExpenseBloc>().add(SetWeeklyLimit(0));
+                Navigator.pop(context);
+                _showSnackBar('Weekly limit removed successfully');
+              },
+              child: Text('Remove', style: TextStyle(color: Colors.red[600])),
+            ),
+          ElevatedButton(
+            onPressed: () {
+              final limit = double.tryParse(_weeklyLimitController.text);
+              if (limit != null && limit > 0) {
+                context.read<ExpenseBloc>().add(SetWeeklyLimit(limit));
+                Navigator.pop(context);
+                _showSnackBar('Weekly limit updated successfully');
+              } else {
+                _showSnackBar('Please enter a valid amount', isError: true);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.purple[600],
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.r),
@@ -358,6 +588,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   : 'No budget set',
               trailing: Icon(Icons.edit, size: 20.sp, color: Colors.grey[400]),
               onTap: _showBudgetDialog,
+            ),
+            Divider(height: 1.h, color: Colors.grey[200]),
+            _buildSettingsTile(
+              icon: Icons.date_range,
+              iconColor: Colors.purple[600]!,
+              iconBgColor: Colors.purple[100]!,
+              title: 'Weekly Limit',
+              subtitle: state.weeklyLimit > 0
+                  ? formatter.format(state.weeklyLimit)
+                  : 'No limit set',
+              trailing: Icon(Icons.edit, size: 20.sp, color: Colors.grey[400]),
+              onTap: _showWeeklyLimitDialog,
+            ),
+            Divider(height: 1.h, color: Colors.grey[200]),
+            _buildSettingsTile(
+              icon: Icons.today,
+              iconColor: Colors.orange[600]!,
+              iconBgColor: Colors.orange[100]!,
+              title: 'Daily Limit',
+              subtitle: state.dailyLimit > 0
+                  ? formatter.format(state.dailyLimit)
+                  : 'No limit set',
+              trailing: Icon(Icons.edit, size: 20.sp, color: Colors.grey[400]),
+              onTap: _showDailyLimitDialog,
             ),
             if (state.monthlyLimit > 0) ...[
               Divider(height: 1.h, color: Colors.grey[200]),

@@ -18,6 +18,30 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       body: BlocBuilder<ExpenseBloc, ExpenseState>(
         builder: (context, state) {
+          // Calculate daily total
+          final now = DateTime.now();
+          final dailyTotal = state.expenses
+              .where(
+                (e) =>
+                    !e.isIncome &&
+                    e.date.year == now.year &&
+                    e.date.month == now.month &&
+                    e.date.day == now.day,
+              )
+              .fold(0.0, (sum, e) => sum + e.amount);
+
+          // Calculate weekly total
+          final weekStart = now.subtract(Duration(days: now.weekday - 1));
+          final weekEnd = weekStart.add(Duration(days: 7));
+          final weeklyTotal = state.expenses
+              .where(
+                (e) =>
+                    !e.isIncome &&
+                    e.date.isAfter(weekStart.subtract(Duration(days: 1))) &&
+                    e.date.isBefore(weekEnd),
+              )
+              .fold(0.0, (sum, e) => sum + e.amount);
+
           return CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -77,110 +101,70 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
 
+              // Budget Overview Cards
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.all(16.w),
-                  child: Card(
-                    elevation: 8,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.r),
+                child: SizedBox(
+                  height: 240.h,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 16.w,
+                      vertical: 12.h,
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(20.r),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: state.overLimit
-                              ? [Colors.red[300]!, Colors.red[400]!]
-                              : [Colors.green[300]!, Colors.teal[400]!],
+                    children: [
+                      // Daily Limit Card
+                      if (state.dailyLimit > 0) ...[
+                        SizedBox(
+                          width: 280.w,
+                          child: _buildLimitCard(
+                            context: context,
+                            title: "Today's Spending",
+                            total: dailyTotal,
+                            limit: state.dailyLimit,
+                            icon: Icons.today,
+                            colors: [Colors.orange[300]!, Colors.orange[500]!],
+                            formatter: formatter,
+                          ),
                         ),
-                      ),
-                      padding: EdgeInsets.all(24.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                state.overLimit
-                                    ? Icons.warning_amber_rounded
-                                    : Icons.check_circle_outline,
-                                color: Colors.white,
-                                size: 32.sp,
-                              ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Text(
-                                  state.overLimit ? "Over Budget!" : "On Track",
-                                  style: TextStyle(
-                                    fontSize: 24.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ],
+                        SizedBox(width: 12.w),
+                      ],
+
+                      // Weekly Limit Card
+                      if (state.weeklyLimit > 0) ...[
+                        SizedBox(
+                          width: 280.w,
+                          child: _buildLimitCard(
+                            context: context,
+                            title: "This Week's Spending",
+                            total: weeklyTotal,
+                            limit: state.weeklyLimit,
+                            icon: Icons.date_range,
+                            colors: [Colors.purple[300]!, Colors.purple[500]!],
+                            formatter: formatter,
                           ),
-                          SizedBox(height: 20.h),
-                          Text(
-                            "This Month's Total",
-                            style: TextStyle(
-                              fontSize: 14.sp,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        ),
+                        SizedBox(width: 12.w),
+                      ],
+
+                      // Monthly Budget Card
+                      if (state.monthlyLimit > 0)
+                        SizedBox(
+                          width: 280.w,
+                          child: _buildLimitCard(
+                            context: context,
+                            title: "This Month's Spending",
+                            total: state.monthlyTotal,
+                            limit: state.monthlyLimit,
+                            icon: Icons.calendar_month,
+                            colors: state.overLimit
+                                ? [Colors.red[300]!, Colors.red[400]!]
+                                : [Colors.green[300]!, Colors.teal[400]!],
+                            formatter: formatter,
+                            showStatus: true,
+                            isOverLimit: state.overLimit,
                           ),
-                          SizedBox(height: 8.h),
-                          Text(
-                            formatter.format(state.monthlyTotal),
-                            style: TextStyle(
-                              fontSize: 36.sp,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(height: 16.h),
-                          Divider(color: Colors.white38),
-                          SizedBox(height: 8.h),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Budget Limit",
-                                style: TextStyle(
-                                  fontSize: 16.sp,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                formatter.format(state.monthlyLimit),
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (state.monthlyLimit > 0) ...[
-                            SizedBox(height: 12.h),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10.r),
-                              child: LinearProgressIndicator(
-                                value: (state.monthlyTotal / state.monthlyLimit)
-                                    .clamp(0.0, 1.0),
-                                minHeight: 8.h,
-                                backgroundColor: Colors.white30,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                        ),
+                    ],
                   ),
                 ),
               ),
@@ -268,6 +252,39 @@ class HomeScreen extends StatelessWidget {
                             size: 32.sp,
                           ),
                         ),
+                        confirmDismiss: (direction) async {
+                          return await showDialog<bool>(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: Text('Delete Expense'),
+                                content: Text(
+                                  'Are you sure you want to delete "${e.title}"?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(false);
+                                    },
+                                    child: Text(
+                                      'Cancel',
+                                      style: TextStyle(color: Colors.grey),
+                                    ),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop(true);
+                                    },
+                                    child: Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
                         onDismissed: (direction) {
                           context.read<ExpenseBloc>().add(DeleteExpenses(e.id));
                         },
@@ -401,6 +418,90 @@ class HomeScreen extends StatelessWidget {
           style: TextStyle(fontSize: 16.sp, color: Colors.white),
         ),
         backgroundColor: Colors.blue[600],
+      ),
+    );
+  }
+
+  Widget _buildLimitCard({
+    required BuildContext context,
+    required String title,
+    required double total,
+    required double limit,
+    required IconData icon,
+    required List<Color> colors,
+    required NumberFormat formatter,
+    bool showStatus = false,
+    bool isOverLimit = false,
+  }) {
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20.r),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: colors,
+          ),
+        ),
+        padding: EdgeInsets.all(16.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  showStatus
+                      ? (isOverLimit
+                            ? Icons.warning_amber_rounded
+                            : Icons.check_circle_outline)
+                      : icon,
+                  color: Colors.white,
+                  size: 28.sp,
+                ),
+                SizedBox(width: 10.w),
+                Expanded(
+                  child: Text(
+                    showStatus
+                        ? (isOverLimit ? "Over Budget!" : "On Track")
+                        : title,
+                    style: TextStyle(
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              formatter.format(total),
+              style: TextStyle(
+                fontSize: 32.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              "of ${formatter.format(limit)}",
+              style: TextStyle(fontSize: 14.sp, color: Colors.white70),
+            ),
+            SizedBox(height: 12.h),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.r),
+              child: LinearProgressIndicator(
+                value: (total / limit).clamp(0.0, 1.0),
+                minHeight: 8.h,
+                backgroundColor: Colors.white30,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
