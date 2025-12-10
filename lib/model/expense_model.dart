@@ -17,19 +17,17 @@ class ExpenseModel {
     required this.isIncome,
   });
 
-  // Convert DateTime to String when saving
   String toJson() {
     return jsonEncode({
       'id': id,
       'title': title,
       'amount': amount,
       'category': category,
-      'date': date.toIso8601String(), // ✅ Convert DateTime to String
+      'date': date.toIso8601String(),
       'isIncome': isIncome,
     });
   }
 
-  // Parse String back to DateTime when loading
   factory ExpenseModel.fromJson(String jsonString) {
     final map = jsonDecode(jsonString);
     return ExpenseModel(
@@ -37,12 +35,11 @@ class ExpenseModel {
       title: map['title'],
       amount: map['amount'],
       category: map['category'],
-      date: DateTime.parse(map['date']), // ✅ Convert String back to DateTime
+      date: DateTime.parse(map['date']),
       isIncome: map['isIncome'],
     );
   }
 
-  // Alternative: toMap and fromMap methods
   Map<String, dynamic> toMap() {
     return {
       'id': id,

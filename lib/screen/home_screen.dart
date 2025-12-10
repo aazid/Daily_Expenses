@@ -2,6 +2,7 @@ import 'package:expense_tracker/bloc/exense_event.dart';
 import 'package:expense_tracker/bloc/expense_bloc.dart';
 import 'package:expense_tracker/bloc/expense_state.dart';
 import 'package:expense_tracker/screen/Add_expense_screen.dart';
+import 'package:expense_tracker/screen/Gemini_screen.dart';
 import 'package:expense_tracker/screen/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -18,7 +19,6 @@ class HomeScreen extends StatelessWidget {
       backgroundColor: Colors.grey[100],
       body: BlocBuilder<ExpenseBloc, ExpenseState>(
         builder: (context, state) {
-          // Calculate daily total
           final now = DateTime.now();
           final dailyTotal = state.expenses
               .where(
@@ -30,7 +30,6 @@ class HomeScreen extends StatelessWidget {
               )
               .fold(0.0, (sum, e) => sum + e.amount);
 
-          // Calculate weekly total
           final weekStart = now.subtract(Duration(days: now.weekday - 1));
           final weekEnd = weekStart.add(Duration(days: 7));
           final weeklyTotal = state.expenses
@@ -87,6 +86,26 @@ class HomeScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
+                        MaterialPageRoute(builder: (context) => GeminiScreen()),
+                      );
+                    },
+                    icon: Container(
+                      padding: EdgeInsets.all(6.w),
+                      decoration: BoxDecoration(
+                        color: Colors.amber[300],
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(
+                        Icons.auto_awesome,
+                        size: 20.sp,
+                        color: Colors.purple[900],
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
                         MaterialPageRoute(
                           builder: (context) => SettingsScreen(),
                         ),
@@ -101,7 +120,6 @@ class HomeScreen extends StatelessWidget {
                 ],
               ),
 
-              // Budget Overview Cards
               SliverToBoxAdapter(
                 child: SizedBox(
                   height: 240.h,
@@ -112,7 +130,6 @@ class HomeScreen extends StatelessWidget {
                       vertical: 12.h,
                     ),
                     children: [
-                      // Daily Limit Card
                       if (state.dailyLimit > 0) ...[
                         SizedBox(
                           width: 280.w,
@@ -129,7 +146,6 @@ class HomeScreen extends StatelessWidget {
                         SizedBox(width: 12.w),
                       ],
 
-                      // Weekly Limit Card
                       if (state.weeklyLimit > 0) ...[
                         SizedBox(
                           width: 280.w,
@@ -146,7 +162,6 @@ class HomeScreen extends StatelessWidget {
                         SizedBox(width: 12.w),
                       ],
 
-                      // Monthly Budget Card
                       if (state.monthlyLimit > 0)
                         SizedBox(
                           width: 280.w,
@@ -196,7 +211,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-              // Expenses List
               if (state.expenses.isEmpty)
                 SliverFillRemaining(
                   child: Center(
@@ -399,7 +413,6 @@ class HomeScreen extends StatelessWidget {
                   ),
                 ),
 
-              // Bottom Padding
               SliverToBoxAdapter(child: SizedBox(height: 80.h)),
             ],
           );

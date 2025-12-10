@@ -1,6 +1,7 @@
 import 'package:expense_tracker/bloc/exense_event.dart';
 import 'package:expense_tracker/bloc/expense_bloc.dart';
 import 'package:expense_tracker/bloc/expense_state.dart';
+import 'package:expense_tracker/screen/photo_receipts_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -714,6 +715,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
       child: Column(
         children: [
+          _buildSettingsTile(
+            icon: Icons.photo_library,
+            iconColor: Colors.blue[600]!,
+            iconBgColor: Colors.blue[100]!,
+            title: 'Photo Receipts',
+            subtitle: 'Save transaction photos',
+            trailing: Icon(
+              Icons.arrow_forward_ios,
+              size: 16.sp,
+              color: Colors.grey[400],
+            ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PhotoReceiptsScreen(),
+                ),
+              );
+            },
+          ),
+          Divider(height: 1.h, color: Colors.grey[200]),
           _buildSettingsTile(
             icon: Icons.delete_sweep,
             iconColor: Colors.red[600]!,
